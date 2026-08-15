@@ -1,6 +1,8 @@
 import ServiceGrid from "@/components/ServiceGrid";
 import { demoServices } from "@/lib/demo-data";
 
+export const dynamic = "force-dynamic";
+
 async function getServices() {
   try { const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/services`, { cache: "no-store" }); if (res.ok) return (await res.json()).services; } catch {}
   return demoServices;
