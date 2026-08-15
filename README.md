@@ -1,4 +1,4 @@
-# Logoipsum Home Service App
+# Home Service App
 
 A complete JavaScript-only home-service marketplace inspired by the supplied reference screens.
 
