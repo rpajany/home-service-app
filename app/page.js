@@ -7,6 +7,9 @@ import { getActiveCategories } from "@/lib/category-data";
 import { connectDB } from "@/lib/db";
 import Service from "@/models/Service";
 
+export const dynamic = "force-dynamic";
+
+
 async function getHomeServices() {
   try {
     await connectDB();
