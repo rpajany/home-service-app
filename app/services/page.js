@@ -1,40 +1,74 @@
 import ServiceGrid from "@/components/ServiceGrid";
-import { demoServices } from "@/lib/demo-data";
-import { connectDB } from "@/lib/db";
-import Service from "@/models/Service";
+import { demoServices, categories as demoCategories } from "@/lib/demo-data";
 
 export const dynamic = "force-dynamic";
 
 async function getServices() {
   try {
-    await connectDB();
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    const services = await Service.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const res = await fetch(`${baseUrl}/api/services`, {
+      cache: "no-store",
+    });
 
-    console.log("SERVICES PAGE - MongoDB services:", services.length);
-    console.log(
-      "SERVICES PAGE - categories:",
-      services.map((s) => s.category)
-    );
+    if (!res.ok) {
+      throw new Error(`Services API failed: ${res.status}`);
+    }
 
-    return services.length ? services : demoServices;
+    const data = await res.json();
+
+    return Array.isArray(data.services)
+      ? data.services
+      : demoServices;
   } catch (error) {
-    console.error("SERVICES PAGE - MongoDB error:", error);
+    console.error("Services API error:", error);
+
     return demoServices;
   }
 }
 
-export default async function ServicesPage({ searchParams }) {
-  const services = await getServices();
+async function getCategories() {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
+    const res = await fetch(`${baseUrl}/api/categories`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Categories API failed: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return Array.isArray(data.categories) && data.categories.length
+      ? data.categories
+      : demoCategories;
+  } catch (error) {
+    console.error("Categories API error:", error);
+
+    return demoCategories;
+  }
+}
+
+export default async function ServicesPage({ searchParams }) {
   const params = await searchParams;
+
+  // Fetch both at the same time
+  const [services, categories] = await Promise.all([
+    getServices(),
+    getCategories(),
+  ]);
 
   return (
     <main>
       <ServiceGrid
         services={services}
+        categories={categories}
         initialCategory={params?.category || "All"}
         initialQuery={params?.search || ""}
       />
