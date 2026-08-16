@@ -14,45 +14,19 @@ export default function ServiceGrid({
   const [query, setQuery] = useState(initialQuery || "");
   const [categories, setCategories] = useState(demoCategories);
 
-  // DEBUG
-  useEffect(() => {
-    console.log("========== SERVICE GRID DEBUG ==========");
-    console.log("Services received:", services);
-    console.log("Services count:", services.length);
-    console.log("Initial category:", JSON.stringify(initialCategory));
-    console.log("Current category:", JSON.stringify(category));
-    console.log("Initial query:", JSON.stringify(initialQuery));
-    console.log("Current query:", JSON.stringify(query));
-
-    console.log(
-      "Carpenter services:",
-      services.filter(
-        (s) =>
-          String(s.category || "").trim().toLowerCase() === "carpenter"
-      )
-    );
-
-    console.log(
-      "All service categories:",
-      services.map((s) => ({
-        name: s.name,
-        category: JSON.stringify(s.category),
-      }))
-    );
-
-    console.log("========================================");
-  }, [services, initialCategory, initialQuery, category, query]);
-
+  // Load categories
   useEffect(() => {
     fetch("/api/categories", { cache: "no-store" })
       .then((res) =>
-        res.ok ? res.json() : Promise.reject(new Error("Category API failed"))
+        res.ok
+          ? res.json()
+          : Promise.reject(new Error("Category API failed"))
       )
       .then((data) => {
-        console.log("Categories API:", data);
-
         setCategories(
-          data.categories?.length ? data.categories : demoCategories
+          data.categories?.length
+            ? data.categories
+            : demoCategories
         );
       })
       .catch((error) => {
@@ -61,6 +35,7 @@ export default function ServiceGrid({
       });
   }, []);
 
+  // Filter services
   const filtered = useMemo(() => {
     const selectedCategory = String(category || "All")
       .trim()
@@ -70,7 +45,7 @@ export default function ServiceGrid({
       .trim()
       .toLowerCase();
 
-    const result = services.filter((s) => {
+    return services.filter((s) => {
       const serviceCategory = String(s.category || "")
         .trim()
         .toLowerCase();
@@ -92,20 +67,12 @@ export default function ServiceGrid({
 
       return matchesCategory && matchesQuery;
     });
-
-    console.log("FILTER DEBUG:", {
-      selectedCategory,
-      searchQuery,
-      totalServices: services.length,
-      filteredServices: result.length,
-      filteredNames: result.map((s) => s.name),
-    });
-
-    return result;
   }, [services, category, query]);
 
   return (
     <div className="container-page py-8">
+
+      {/* Header */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-[#7045e8]">
@@ -126,16 +93,20 @@ export default function ServiceGrid({
       </div>
 
       <div className="grid gap-7 lg:grid-cols-[200px_1fr]">
+
+        {/* Categories */}
         <aside>
           <p className="mb-3 text-sm font-bold text-[#7045e8]">
             Categories
           </p>
 
           <div className="flex gap-2 overflow-x-auto lg:flex-col">
+
+            {/* All */}
             <button
               onClick={() => setCategory("All")}
               className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
-                category === "All"
+                String(category).trim().toLowerCase() === "all"
                   ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
                   : "border-[#e4e0e8]"
               }`}
@@ -143,31 +114,46 @@ export default function ServiceGrid({
               All services
             </button>
 
-            {categories.map((c) => (
-              <button
-                key={c._id || c.name}
-                onClick={() => setCategory(c.name)}
-                className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
-                  category === c.name
-                    ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
-                    : "border-[#e4e0e8]"
-                }`}
-              >
-                <CategoryIcon
-                  name={c.icon || c.name}
-                  size={21}
-                />
+            {/* Categories */}
+            {categories.map((c) => {
+              const isSelected =
+                String(category || "")
+                  .trim()
+                  .toLowerCase() ===
+                String(c.name || "")
+                  .trim()
+                  .toLowerCase();
 
-                {c.name}
-              </button>
-            ))}
+              return (
+                <button
+                  key={c._id || c.name}
+                  onClick={() => setCategory(c.name)}
+                  className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
+                    isSelected
+                      ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
+                      : "border-[#e4e0e8]"
+                  }`}
+                >
+                  <CategoryIcon
+                    name={c.icon || c.name}
+                    size={21}
+                  />
+
+                  {c.name}
+                </button>
+              );
+            })}
           </div>
         </aside>
 
+        {/* Services */}
         <section>
           <div className="mb-4 flex items-center justify-between">
+
             <h2 className="text-xl font-black">
-              {category === "All" ? "All services" : category}
+              {String(category).trim().toLowerCase() === "all"
+                ? "All services"
+                : category}
             </h2>
 
             <span className="text-sm text-[#898591]">
@@ -190,6 +176,7 @@ export default function ServiceGrid({
             </div>
           )}
         </section>
+
       </div>
     </div>
   );
