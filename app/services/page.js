@@ -1,62 +1,38 @@
 import ServiceGrid from "@/components/ServiceGrid";
-import {
-  demoServices,
-  categories as demoCategories,
-} from "@/lib/demo-data";
-import { getAppUrl } from "@/lib/app-url";
+import { demoServices } from "@/lib/demo-data";
+import { getActiveCategories } from "@/lib/category-data";
+import { connectDB } from "@/lib/db";
+import Service from "@/models/Service";
 
 export const dynamic = "force-dynamic";
 
 async function getServices() {
   try {
-    const baseUrl = getAppUrl();
+    await connectDB();
 
-    const res = await fetch(`${baseUrl}/api/services`, {
-      cache: "no-store",
-    });
+    const services = await Service.find({})
+      .sort({ createdAt: -1 })
+      .lean();
 
-    if (!res.ok) {
-      throw new Error(`Services API failed: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    return Array.isArray(data.services)
-      ? data.services
-      : demoServices;
+    return services.length ? services : demoServices;
   } catch (error) {
-    console.error("Services API error:", error);
+    console.error("Services DB error:", error);
     return demoServices;
   }
 }
 
 async function getCategories() {
   try {
-    const baseUrl = getAppUrl();
+    const categories = await getActiveCategories();
 
-    const res = await fetch(`${baseUrl}/api/categories`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Categories API failed: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    return Array.isArray(data.categories) &&
-      data.categories.length
-      ? data.categories
-      : demoCategories;
+    return categories?.length ? categories : [];
   } catch (error) {
-    console.error("Categories API error:", error);
-    return demoCategories;
+    console.error("Categories DB error:", error);
+    return [];
   }
 }
 
-export default async function ServicesPage({
-  searchParams,
-}) {
+export default async function ServicesPage({ searchParams }) {
   const params = await searchParams;
 
   const [services, categories] = await Promise.all([
