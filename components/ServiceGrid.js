@@ -1,69 +1,76 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import ServiceCard from "@/components/ServiceCard";
 import CategoryIcon from "@/components/CategoryIcon";
 import { categories as demoCategories } from "@/lib/demo-data";
 
 export default function ServiceGrid({
   services = [],
+  categories: initialCategories = [],
   initialCategory = "All",
   initialQuery = "",
 }) {
-  const [category, setCategory] = useState(initialCategory || "All");
-  const [query, setQuery] = useState(initialQuery || "");
-  const [categories, setCategories] = useState(demoCategories);
+  const [category, setCategory] = useState(
+    initialCategory || "All"
+  );
 
-  // Load categories
-  useEffect(() => {
-    fetch("/api/categories", { cache: "no-store" })
-      .then((res) =>
-        res.ok
-          ? res.json()
-          : Promise.reject(new Error("Category API failed"))
-      )
-      .then((data) => {
-        setCategories(
-          data.categories?.length
-            ? data.categories
-            : demoCategories
-        );
-      })
-      .catch((error) => {
-        console.error("Categories API error:", error);
-        setCategories(demoCategories);
-      });
-  }, []);
+  const [query, setQuery] = useState(
+    initialQuery || ""
+  );
 
-  // Filter services
+  /*
+   * Categories are now received directly from the server.
+   *
+   * No useEffect()
+   * No browser API request
+   * No delayed category rendering
+   */
+  const categories =
+    initialCategories?.length
+      ? initialCategories
+      : demoCategories;
+
+  /*
+   * Normalize a value so that:
+   *
+   * "Carpenter"
+   * "carpenter"
+   * " Carpenter "
+   *
+   * are treated as the same category.
+   */
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
   const filtered = useMemo(() => {
-    const selectedCategory = String(category || "All")
-      .trim()
-      .toLowerCase();
+    const selectedCategory = normalize(category);
+    const searchQuery = normalize(query);
 
-    const searchQuery = String(query || "")
-      .trim()
-      .toLowerCase();
-
-    return services.filter((s) => {
-      const serviceCategory = String(s.category || "")
-        .trim()
-        .toLowerCase();
+    return services.filter((service) => {
+      const serviceCategory = normalize(service.category);
 
       const matchesCategory =
         selectedCategory === "all" ||
         serviceCategory === selectedCategory;
 
-      const searchText = `
-        ${s.name || ""}
-        ${s.providerName || ""}
-        ${s.address || ""}
-        ${s.city || ""}
-        ${s.category || ""}
-        ${s.description || ""}
-      `.toLowerCase();
+      const searchText = [
+        service.name,
+        service.providerName,
+        service.address,
+        service.city,
+        service.category,
+        service.description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-      const matchesQuery = searchText.includes(searchQuery);
+      const matchesQuery =
+        !searchQuery ||
+        searchText.includes(searchQuery);
 
       return matchesCategory && matchesQuery;
     });
@@ -72,7 +79,9 @@ export default function ServiceGrid({
   return (
     <div className="container-page py-8">
 
-      {/* Header */}
+      {/* =========================
+          PAGE HEADER
+      ========================= */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-[#7045e8]">
@@ -92,9 +101,14 @@ export default function ServiceGrid({
         />
       </div>
 
+      {/* =========================
+          CONTENT
+      ========================= */}
       <div className="grid gap-7 lg:grid-cols-[200px_1fr]">
 
-        {/* Categories */}
+        {/* =========================
+            CATEGORIES
+        ========================= */}
         <aside>
           <p className="mb-3 text-sm font-bold text-[#7045e8]">
             Categories
@@ -102,11 +116,12 @@ export default function ServiceGrid({
 
           <div className="flex gap-2 overflow-x-auto lg:flex-col">
 
-            {/* All */}
+            {/* ALL SERVICES */}
             <button
+              type="button"
               onClick={() => setCategory("All")}
               className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
-                String(category).trim().toLowerCase() === "all"
+                normalize(category) === "all"
                   ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
                   : "border-[#e4e0e8]"
               }`}
@@ -114,20 +129,27 @@ export default function ServiceGrid({
               All services
             </button>
 
-            {/* Categories */}
+            {/* DATABASE CATEGORIES */}
             {categories.map((c) => {
+              const categoryName = String(
+                c.name || ""
+              ).trim();
+
+              if (!categoryName) {
+                return null;
+              }
+
               const isSelected =
-                String(category || "")
-                  .trim()
-                  .toLowerCase() ===
-                String(c.name || "")
-                  .trim()
-                  .toLowerCase();
+                normalize(category) ===
+                normalize(categoryName);
 
               return (
                 <button
-                  key={c._id || c.name}
-                  onClick={() => setCategory(c.name)}
+                  key={c._id || c.slug || categoryName}
+                  type="button"
+                  onClick={() =>
+                    setCategory(categoryName)
+                  }
                   className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
                     isSelected
                       ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
@@ -135,23 +157,26 @@ export default function ServiceGrid({
                   }`}
                 >
                   <CategoryIcon
-                    name={c.icon || c.name}
+                    name={c.icon || categoryName}
                     size={21}
                   />
 
-                  {c.name}
+                  {categoryName}
                 </button>
               );
             })}
           </div>
         </aside>
 
-        {/* Services */}
+        {/* =========================
+            SERVICES
+        ========================= */}
         <section>
-          <div className="mb-4 flex items-center justify-between">
 
+          {/* SECTION HEADER */}
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-black">
-              {String(category).trim().toLowerCase() === "all"
+              {normalize(category) === "all"
                 ? "All services"
                 : category}
             </h2>
@@ -161,12 +186,13 @@ export default function ServiceGrid({
             </span>
           </div>
 
-          {filtered.length ? (
+          {/* SERVICE CARDS */}
+          {filtered.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {filtered.map((s) => (
+              {filtered.map((service) => (
                 <ServiceCard
-                  key={s._id}
-                  service={s}
+                  key={service._id}
+                  service={service}
                 />
               ))}
             </div>
@@ -175,8 +201,8 @@ export default function ServiceGrid({
               No services found.
             </div>
           )}
-        </section>
 
+        </section>
       </div>
     </div>
   );
