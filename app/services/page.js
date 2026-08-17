@@ -3,189 +3,224 @@ import {
   demoServices,
   categories as demoCategories,
 } from "@/lib/demo-data";
-import { getAppUrl } from "@/lib/app-url";
+
+import { connectDB } from "@/lib/db";
+import Service from "@/models/Service";
+import Category from "@/models/Category";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Convert MongoDB/Mongoose values into
- * plain values that can safely be passed
- * from Server Components to Client Components.
+ * Convert a MongoDB/Mongoose service document
+ * into a completely plain object that can safely
+ * be passed to the Client Component.
  */
 function serializeService(service) {
-  return {
-    ...service,
+  if (!service) return null;
 
+  return {
     _id:
-      service?._id !== undefined && service?._id !== null
+      service._id !== undefined && service._id !== null
         ? String(service._id)
         : "",
 
-    slug: service?.slug ? String(service.slug) : "",
+    slug: service.slug ? String(service.slug) : "",
 
-    name: service?.name ? String(service.name) : "",
+    name: service.name ? String(service.name) : "",
 
-    category: service?.category
+    category: service.category
       ? String(service.category)
       : "",
 
-    providerName: service?.providerName
+    providerName: service.providerName
       ? String(service.providerName)
       : "",
 
-    address: service?.address
+    address: service.address
       ? String(service.address)
       : "",
 
-    city: service?.city
+    city: service.city
       ? String(service.city)
       : "",
 
-    description: service?.description
+    email: service.email
+      ? String(service.email)
+      : "",
+
+    description: service.description
       ? String(service.description)
       : "",
 
-    image: service?.image
+    image: service.image
       ? String(service.image)
       : "",
 
-    imagePublicId: service?.imagePublicId
+    imagePublicId: service.imagePublicId
       ? String(service.imagePublicId)
       : "",
 
-    gallery: Array.isArray(service?.gallery)
+    gallery: Array.isArray(service.gallery)
       ? service.gallery.map((image) => String(image))
       : [],
 
     rating:
-      service?.rating !== undefined &&
-      service?.rating !== null
+      service.rating !== undefined &&
+      service.rating !== null
         ? Number(service.rating)
         : 0,
 
     reviews:
-      service?.reviews !== undefined &&
-      service?.reviews !== null
+      service.reviews !== undefined &&
+      service.reviews !== null
         ? Number(service.reviews)
         : 0,
 
-    availableFrom: service?.availableFrom
+    availableFrom: service.availableFrom
       ? String(service.availableFrom)
       : "",
 
-    availableTo: service?.availableTo
+    availableTo: service.availableTo
       ? String(service.availableTo)
       : "",
 
-    slots: Array.isArray(service?.slots)
+    slots: Array.isArray(service.slots)
       ? service.slots.map((slot) => String(slot))
       : [],
 
-    status: service?.status
+    status: service.status
       ? String(service.status)
       : "",
 
-    createdAt: service?.createdAt
+    createdAt: service.createdAt
       ? new Date(service.createdAt).toISOString()
       : null,
 
-    updatedAt: service?.updatedAt
+    updatedAt: service.updatedAt
       ? new Date(service.updatedAt).toISOString()
       : null,
   };
 }
 
 /**
- * Convert category MongoDB values into
- * plain serializable values.
+ * Convert a MongoDB/Mongoose category document
+ * into a completely plain object.
  */
 function serializeCategory(category) {
-  return {
-    ...category,
+  if (!category) return null;
 
+  return {
     _id:
-      category?._id !== undefined &&
-      category?._id !== null
+      category._id !== undefined &&
+      category._id !== null
         ? String(category._id)
         : "",
 
-    name: category?.name
+    name: category.name
       ? String(category.name)
       : "",
 
-    slug: category?.slug
+    slug: category.slug
       ? String(category.slug)
       : "",
 
-    icon: category?.icon
+    icon: category.icon
       ? String(category.icon)
       : "",
 
-    createdAt: category?.createdAt
+    createdAt: category.createdAt
       ? new Date(category.createdAt).toISOString()
       : null,
 
-    updatedAt: category?.updatedAt
+    updatedAt: category.updatedAt
       ? new Date(category.updatedAt).toISOString()
       : null,
   };
 }
 
+/**
+ * Get services directly from MongoDB.
+ *
+ * This is the same approach that was working
+ * in your old Services page.
+ */
 async function getServices() {
   try {
-    const baseUrl = getAppUrl();
+    await connectDB();
 
-    const res = await fetch(`${baseUrl}/api/services`, {
-      cache: "no-store",
-    });
+    const services = await Service.find({})
+      .sort({ createdAt: -1 })
+      .lean();
 
-    if (!res.ok) {
-      throw new Error(
-        `Services API failed: ${res.status}`
-      );
-    }
+    console.log(
+      "SERVICES PAGE - MongoDB services:",
+      services.length
+    );
 
-    const data = await res.json();
+    console.log(
+      "SERVICES PAGE - categories:",
+      services.map((service) => ({
+        name: service.name,
+        category: service.category,
+      }))
+    );
 
-    const services = Array.isArray(data.services)
-      ? data.services
-      : demoServices;
+    const serializedServices = services
+      .map(serializeService)
+      .filter(Boolean);
 
-    return services.map(serializeService);
+    return serializedServices.length
+      ? serializedServices
+      : demoServices.map(serializeService);
   } catch (error) {
-    console.error("Services API error:", error);
+    console.error(
+      "SERVICES PAGE - MongoDB services error:",
+      error
+    );
 
-    return demoServices.map(serializeService);
+    return demoServices
+      .map(serializeService)
+      .filter(Boolean);
   }
 }
 
+/**
+ * Get categories directly from MongoDB.
+ */
 async function getCategories() {
   try {
-    const baseUrl = getAppUrl();
+    await connectDB();
 
-    const res = await fetch(`${baseUrl}/api/categories`, {
-      cache: "no-store",
-    });
+    const categories = await Category.find({})
+      .sort({ name: 1 })
+      .lean();
 
-    if (!res.ok) {
-      throw new Error(
-        `Categories API failed: ${res.status}`
-      );
-    }
+    console.log(
+      "SERVICES PAGE - MongoDB categories:",
+      categories.length
+    );
 
-    const data = await res.json();
+    console.log(
+      "SERVICES PAGE - category names:",
+      categories.map((category) => category.name)
+    );
 
-    const categories =
-      Array.isArray(data.categories) &&
-      data.categories.length
-        ? data.categories
-        : demoCategories;
+    const serializedCategories = categories
+      .map(serializeCategory)
+      .filter(Boolean);
 
-    return categories.map(serializeCategory);
+    return serializedCategories.length
+      ? serializedCategories
+      : demoCategories.map(serializeCategory);
   } catch (error) {
-    console.error("Categories API error:", error);
+    console.error(
+      "SERVICES PAGE - MongoDB categories error:",
+      error
+    );
 
-    return demoCategories.map(serializeCategory);
+    return demoCategories
+      .map(serializeCategory)
+      .filter(Boolean);
   }
 }
 
@@ -194,10 +229,29 @@ export default async function ServicesPage({
 }) {
   const params = await searchParams;
 
+  /*
+   * Both queries use MongoDB directly.
+   *
+   * Promise.all is safe because connectDB() is cached
+   * in your DB utility in normal Next.js/Mongoose usage.
+   */
   const [services, categories] = await Promise.all([
     getServices(),
     getCategories(),
   ]);
+
+  console.log(
+    "SERVICES PAGE - Final services:",
+    services.map((service) => ({
+      name: service.name,
+      category: service.category,
+    }))
+  );
+
+  console.log(
+    "SERVICES PAGE - Final categories:",
+    categories.map((category) => category.name)
+  );
 
   return (
     <main>
