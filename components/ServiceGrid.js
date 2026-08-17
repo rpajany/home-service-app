@@ -11,35 +11,13 @@ export default function ServiceGrid({
   initialCategory = "All",
   initialQuery = "",
 }) {
-  const [category, setCategory] = useState(
-    initialCategory || "All"
-  );
+  const [category, setCategory] = useState(initialCategory || "All");
+  const [query, setQuery] = useState(initialQuery || "");
 
-  const [query, setQuery] = useState(
-    initialQuery || ""
-  );
+  const categories = initialCategories?.length
+    ? initialCategories
+    : demoCategories;
 
-  /*
-   * Categories are now received directly from the server.
-   *
-   * No useEffect()
-   * No browser API request
-   * No delayed category rendering
-   */
-  const categories =
-    initialCategories?.length
-      ? initialCategories
-      : demoCategories;
-
-  /*
-   * Normalize a value so that:
-   *
-   * "Carpenter"
-   * "carpenter"
-   * " Carpenter "
-   *
-   * are treated as the same category.
-   */
   const normalize = (value) =>
     String(value || "")
       .trim()
@@ -77,13 +55,11 @@ export default function ServiceGrid({
   }, [services, category, query]);
 
   return (
-    <div className="container-page py-8">
+    <div className="container-page w-full min-w-0 max-w-full overflow-x-hidden py-8">
 
-      {/* =========================
-          PAGE HEADER
-      ========================= */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      {/* HEADER */}
+      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-[#7045e8]">
             Explore services
           </p>
@@ -97,26 +73,21 @@ export default function ServiceGrid({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search services..."
-          className="h-11 w-full rounded-md border border-[#ded9e6] px-4 text-sm outline-none focus:border-[#7045e8] sm:w-72"
+          className="h-11 w-full max-w-full rounded-md border border-[#ded9e6] px-4 text-sm outline-none focus:border-[#7045e8] sm:w-72"
         />
       </div>
 
-      {/* =========================
-          CONTENT
-      ========================= */}
-      <div className="grid gap-7 lg:grid-cols-[200px_1fr]">
+      {/* CONTENT */}
+      <div className="grid w-full min-w-0 max-w-full gap-7 lg:grid-cols-[200px_minmax(0,1fr)]">
 
-        {/* =========================
-            CATEGORIES
-        ========================= */}
-        <aside>
+        {/* CATEGORIES */}
+        <aside className="min-w-0 max-w-full">
           <p className="mb-3 text-sm font-bold text-[#7045e8]">
             Categories
           </p>
 
-          <div className="flex gap-2 overflow-x-auto lg:flex-col">
-
-            {/* ALL SERVICES */}
+          <div className="flex min-w-0 max-w-full gap-2 overflow-x-auto lg:flex-col">
+            {/* ALL */}
             <button
               type="button"
               onClick={() => setCategory("All")}
@@ -129,27 +100,20 @@ export default function ServiceGrid({
               All services
             </button>
 
-            {/* DATABASE CATEGORIES */}
+            {/* CATEGORIES */}
             {categories.map((c) => {
-              const categoryName = String(
-                c.name || ""
-              ).trim();
+              const categoryName = String(c.name || "").trim();
 
-              if (!categoryName) {
-                return null;
-              }
+              if (!categoryName) return null;
 
               const isSelected =
-                normalize(category) ===
-                normalize(categoryName);
+                normalize(category) === normalize(categoryName);
 
               return (
                 <button
                   key={c._id || c.slug || categoryName}
                   type="button"
-                  onClick={() =>
-                    setCategory(categoryName)
-                  }
+                  onClick={() => setCategory(categoryName)}
                   className={`flex shrink-0 items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-semibold ${
                     isSelected
                       ? "border-[#7045e8] bg-[#f4efff] text-[#7045e8]"
@@ -168,36 +132,34 @@ export default function ServiceGrid({
           </div>
         </aside>
 
-        {/* =========================
-            SERVICES
-        ========================= */}
-        <section>
+        {/* SERVICES */}
+        <section className="min-w-0 w-full max-w-full">
 
-          {/* SECTION HEADER */}
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex min-w-0 items-center justify-between">
             <h2 className="text-xl font-black">
               {normalize(category) === "all"
                 ? "All services"
                 : category}
             </h2>
 
-            <span className="text-sm text-[#898591]">
+            <span className="shrink-0 text-sm text-[#898591]">
               {filtered.length} services
             </span>
           </div>
 
-          {/* SERVICE CARDS */}
           {filtered.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid w-full min-w-0 max-w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {filtered.map((service) => (
-                <ServiceCard
+                <div
                   key={service._id}
-                  service={service}
-                />
+                  className="min-w-0 max-w-full"
+                >
+                  <ServiceCard service={service} />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-10 text-center text-gray-500">
+            <div className="w-full max-w-full rounded-xl border border-dashed p-10 text-center text-gray-500">
               No services found.
             </div>
           )}

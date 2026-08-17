@@ -1,0 +1,81 @@
+Build & Deploy Full Stack Next.js Home Service App using React.js, Hygraph , Tailwind css
+https://www.youtube.com/watch?v=YefD_gj3svM
+
+CHATGPT  -  AI TOOL
+--------------------
+Done. I created the complete Next.js 16 + MongoDB + Tailwind CSS v4 + shadcn-style + JavaScript-only home service web app based on your reference screens.
+
+Included
+Home page matching the provided design
+Service/category listing
+Search and category filtering
+Service detail page
+Booking date calendar
+Time-slot selection
+MongoDB booking persistence
+Duplicate booking protection
+Login / registration
+JWT HttpOnly authentication
+My Bookings — Booked / Completed
+Responsive navbar
+Service provider information
+Similar services
+Local service images extracted from your supplied screenshots
+MongoDB seed script
+.env.example
+shadcn configuration
+No TypeScript files
+
+
+Demo account:
+-------------
+Email: demo@example.com
+Password: password123
+
+Email:kumar@gmail.com
+Password: Kumar@123
+
+admin account:
+--------------
+Email: admin@example.com
+Password: Admin@12345
+
+https://console.cloudinary.com/
+
+Run:
+npm install
+npm run seed
+npm run dev
+
+Then open:
+http://localhost:3000
+
+MONGODB_URI=mongodb+srv://admin:xxxxx@cluster0.xxxxx.mongodb.net/home-service
+
+
+https://github.com/rpajany/home-service-app.git
+
+…or create a new repository on the command line
+echo "# home-service-app" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/rpajany/home-service-app.git
+git push -u origin main
+
+---------------------------------------------------------------
+…or push an existing repository from the command line
+git remote add origin https://github.com/rpajany/home-service-app.git
+git branch -M main
+git push -u origin main
+
+
+----------------------------------------
+git init
+git add .
+git status
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/rpajany/home-service-app.git
+git push -u origin main
