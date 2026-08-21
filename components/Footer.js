@@ -105,7 +105,7 @@ export default function Footer() {
 
         <div className="mt-9 border-t border-white/10 pt-5 text-center text-xs text-white/50 md:flex md:items-center md:justify-between md:text-left">
           <p>© {year} {info.name}. All rights reserved.</p>
-          <p className="mt-2 md:mt-0">Designed in Tamil Nadu</p>
+          <p className="mt-2 md:mt-0">Designed in Puducherry</p>
         </div>
       </div>
     </footer>
