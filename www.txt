@@ -47,6 +47,9 @@ npm install
 npm run seed
 npm run dev
 
+
+https://resend.com/
+
 Then open:
 http://localhost:3000
 

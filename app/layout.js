@@ -1,6 +1,7 @@
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingContactActions from "@/components/FloatingContactActions";
 
 export const metadata = {
   title: "Home Services",
@@ -16,7 +17,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <body className="flex min-h-screen flex-col">
+      <body className="flex min-h-screen flex-col pb-20 md:pb-0">
         <Header />
 
         <div className="flex-1">
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
         </div>
 
         <Footer />
+        <FloatingContactActions />
       </body>
     </html>
   );
