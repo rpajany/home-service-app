@@ -1,8 +1,5 @@
 import ServiceGrid from "@/components/ServiceGrid";
-import {
-  demoServices,
-  categories as demoCategories,
-} from "@/lib/demo-data";
+import { demoServices, categories as demoCategories } from "@/lib/demo-data";
 
 import { connectDB } from "@/lib/db";
 import Service from "@/models/Service";
@@ -28,69 +25,45 @@ function serializeService(service) {
 
     name: service.name ? String(service.name) : "",
 
-    category: service.category
-      ? String(service.category)
-      : "",
+    category: service.category ? String(service.category) : "",
 
-    providerName: service.providerName
-      ? String(service.providerName)
-      : "",
+    providerName: service.providerName ? String(service.providerName) : "",
 
-    address: service.address
-      ? String(service.address)
-      : "",
+    address: service.address ? String(service.address) : "",
 
-    city: service.city
-      ? String(service.city)
-      : "",
+    city: service.city ? String(service.city) : "",
 
-    email: service.email
-      ? String(service.email)
-      : "",
+    email: service.email ? String(service.email) : "",
 
-    description: service.description
-      ? String(service.description)
-      : "",
+    description: service.description ? String(service.description) : "",
 
-    image: service.image
-      ? String(service.image)
-      : "",
+    image: service.image ? String(service.image) : "",
 
-    imagePublicId: service.imagePublicId
-      ? String(service.imagePublicId)
-      : "",
+    imagePublicId: service.imagePublicId ? String(service.imagePublicId) : "",
 
     gallery: Array.isArray(service.gallery)
       ? service.gallery.map((image) => String(image))
       : [],
 
     rating:
-      service.rating !== undefined &&
-      service.rating !== null
+      service.rating !== undefined && service.rating !== null
         ? Number(service.rating)
         : 0,
 
     reviews:
-      service.reviews !== undefined &&
-      service.reviews !== null
+      service.reviews !== undefined && service.reviews !== null
         ? Number(service.reviews)
         : 0,
 
-    availableFrom: service.availableFrom
-      ? String(service.availableFrom)
-      : "",
+    availableFrom: service.availableFrom ? String(service.availableFrom) : "",
 
-    availableTo: service.availableTo
-      ? String(service.availableTo)
-      : "",
+    availableTo: service.availableTo ? String(service.availableTo) : "",
 
     slots: Array.isArray(service.slots)
       ? service.slots.map((slot) => String(slot))
       : [],
 
-    status: service.status
-      ? String(service.status)
-      : "",
+    status: service.status ? String(service.status) : "",
 
     createdAt: service.createdAt
       ? new Date(service.createdAt).toISOString()
@@ -111,22 +84,15 @@ function serializeCategory(category) {
 
   return {
     _id:
-      category._id !== undefined &&
-      category._id !== null
+      category._id !== undefined && category._id !== null
         ? String(category._id)
         : "",
 
-    name: category.name
-      ? String(category.name)
-      : "",
+    name: category.name ? String(category.name) : "",
 
-    slug: category.slug
-      ? String(category.slug)
-      : "",
+    slug: category.slug ? String(category.slug) : "",
 
-    icon: category.icon
-      ? String(category.icon)
-      : "",
+    icon: category.icon ? String(category.icon) : "",
 
     createdAt: category.createdAt
       ? new Date(category.createdAt).toISOString()
@@ -148,39 +114,30 @@ async function getServices() {
   try {
     await connectDB();
 
-    const services = await Service.find({})
-      .sort({ createdAt: -1 })
-      .lean();
+    const services = await Service.find({}).sort({ createdAt: -1 }).lean();
 
-    console.log(
-      "SERVICES PAGE - MongoDB services:",
-      services.length
-    );
+    // console.log(
+    //   "SERVICES PAGE - MongoDB services:",
+    //   services.length
+    // );
 
-    console.log(
-      "SERVICES PAGE - categories:",
-      services.map((service) => ({
-        name: service.name,
-        category: service.category,
-      }))
-    );
+    // console.log(
+    //   "SERVICES PAGE - categories:",
+    //   services.map((service) => ({
+    //     name: service.name,
+    //     category: service.category,
+    //   }))
+    // );
 
-    const serializedServices = services
-      .map(serializeService)
-      .filter(Boolean);
+    const serializedServices = services.map(serializeService).filter(Boolean);
 
     return serializedServices.length
       ? serializedServices
       : demoServices.map(serializeService);
   } catch (error) {
-    console.error(
-      "SERVICES PAGE - MongoDB services error:",
-      error
-    );
+    console.error("SERVICES PAGE - MongoDB services error:", error);
 
-    return demoServices
-      .map(serializeService)
-      .filter(Boolean);
+    return demoServices.map(serializeService).filter(Boolean);
   }
 }
 
@@ -191,19 +148,17 @@ async function getCategories() {
   try {
     await connectDB();
 
-    const categories = await Category.find({})
-      .sort({ name: 1 })
-      .lean();
+    const categories = await Category.find({}).sort({ name: 1 }).lean();
 
-    console.log(
-      "SERVICES PAGE - MongoDB categories:",
-      categories.length
-    );
+    // console.log(
+    //   "SERVICES PAGE - MongoDB categories:",
+    //   categories.length
+    // );
 
-    console.log(
-      "SERVICES PAGE - category names:",
-      categories.map((category) => category.name)
-    );
+    // console.log(
+    //   "SERVICES PAGE - category names:",
+    //   categories.map((category) => category.name)
+    // );
 
     const serializedCategories = categories
       .map(serializeCategory)
@@ -213,20 +168,13 @@ async function getCategories() {
       ? serializedCategories
       : demoCategories.map(serializeCategory);
   } catch (error) {
-    console.error(
-      "SERVICES PAGE - MongoDB categories error:",
-      error
-    );
+    console.error("SERVICES PAGE - MongoDB categories error:", error);
 
-    return demoCategories
-      .map(serializeCategory)
-      .filter(Boolean);
+    return demoCategories.map(serializeCategory).filter(Boolean);
   }
 }
 
-export default async function ServicesPage({
-  searchParams,
-}) {
+export default async function ServicesPage({ searchParams }) {
   const params = await searchParams;
 
   /*
@@ -248,10 +196,10 @@ export default async function ServicesPage({
     }))
   );
 
-  console.log(
-    "SERVICES PAGE - Final categories:",
-    categories.map((category) => category.name)
-  );
+  // console.log(
+  //   "SERVICES PAGE - Final categories:",
+  //   categories.map((category) => category.name)
+  // );
 
   return (
     <main>

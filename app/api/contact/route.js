@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Company from "@/models/Company";
+import { sendEmail } from "@/lib/email";
 
 function clean(value, max = 500) {
   return String(value || "").trim().slice(0, max);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function buildMailto({ to, name, phone, email, service, date, problem }) {
@@ -51,7 +61,7 @@ export async function POST(req) {
 
     const company = await Company.findOne().lean();
     const companyEmail = String(
-      company?.email || process.env.CONTACT_EMAIL || ""
+      company?.email || process.env.COMPANY_EMAIL || process.env.CONTACT_EMAIL || ""
     ).trim();
 
     if (!companyEmail) {
@@ -61,66 +71,69 @@ export async function POST(req) {
       );
     }
 
-    if (process.env.RESEND_API_KEY && (process.env.RESEND_FROM_EMAIL || companyEmail)) {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM_EMAIL || companyEmail,
-          to: [companyEmail],
-          ...(email ? { reply_to: email } : {}),
-          subject: `Service Request - ${service}`,
-          text: [
-            `Name: ${name}`,
-            `Phone: ${phone}`,
-            `Email: ${email || "Not provided"}`,
-            `Service: ${service}`,
-            `Preferred Date: ${date || "Not specified"}`,
-            "",
-            "Problem / Requirement:",
-            problem || "Not provided",
-          ].join("\n"),
-        }),
-      });
+    const subject = `Service Request - ${service}`;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("CONTACT_EMAIL_ERROR", errorText);
-        return NextResponse.json(
-          {
-            error:
-              "Unable to send the request right now. Please call us directly.",
-            phone: company?.phone || "",
-            whatsapp: company?.phone || "",
-          },
-          { status: 502 }
-        );
-      }
+    const text = [
+      "New Service Request",
+      "",
+      `Name: ${name}`,
+      `Phone: ${phone}`,
+      `Email: ${email || "Not provided"}`,
+      `Service: ${service}`,
+      `Preferred Date: ${date || "Not specified"}`,
+      "",
+      "Problem / Requirement:",
+      problem || "Not provided",
+    ].join("\n");
+
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">
+        <h2 style="color:#7045e8">New Service Request</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email || "Not provided")}</p>
+        <p><strong>Service:</strong> ${escapeHtml(service)}</p>
+        <p><strong>Preferred Date:</strong> ${escapeHtml(date || "Not specified")}</p>
+        <p><strong>Problem / Requirement:</strong></p>
+        <p>${escapeHtml(problem || "Not provided").replace(/\n/g, "<br />")}</p>
+      </div>
+    `;
+
+    try {
+      const result = await sendEmail({
+        to: companyEmail,
+        subject,
+        text,
+        html,
+        replyTo: email,
+      });
 
       return NextResponse.json({
         success: true,
+        provider: result.provider,
         message: "Booking request sent successfully. We will call you back soon.",
       });
-    }
+    } catch (emailError) {
+      console.error("CONTACT_EMAIL_ERROR", emailError);
 
-    return NextResponse.json({
-      success: true,
-      fallback: true,
-      mailto: buildMailto({
-        to: companyEmail,
-        name,
-        phone,
-        email,
-        service,
-        date,
-        problem,
-      }),
-      message:
-        "Your email app is ready with the service request. Please send the email to complete your request.",
-    });
+      // Keep the existing fallback behavior when server email is not configured
+      // or delivery fails. The customer can still send the request manually.
+      return NextResponse.json({
+        success: true,
+        fallback: true,
+        mailto: buildMailto({
+          to: companyEmail,
+          name,
+          phone,
+          email,
+          service,
+          date,
+          problem,
+        }),
+        message:
+          "Server email delivery is not available. Your email app is ready with the service request.",
+      });
+    }
   } catch (error) {
     console.error("CONTACT_POST_ERROR", error);
     return NextResponse.json(
